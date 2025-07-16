@@ -83,13 +83,7 @@ Loading a model with `byaldi` is extremely straightforward:
 ```python3
 from byaldi import RAGMultiModalModel
 # Optionally, you can specify an `index_root`, which is where it'll save the index. It defaults to ".byaldi/".
-RAG = RAGMultiModalModel.from_pretrained(
-    "vidore/colqwen2-v1.0",
-    auto_rotate=True,  # Enable automatic PDF rotation correction (default: True)
-    rotation_confidence_threshold=2.0,  # Tesseract confidence threshold (default: 2.0)
-    use_pdf_rotation=True,  # Use PDF-level rotation detection (default: True)
-    use_tesseract_fallback=True  # Use Tesseract as fallback (default: True)
-)
+RAG = RAGMultiModalModel.from_pretrained("vidore/colqwen2-v1.0")
 ```
 
 If you've already got an index, and wish to load it along with the model necessary to query it, you can do so just as easily:
@@ -98,29 +92,6 @@ If you've already got an index, and wish to load it along with the model necessa
 from byaldi import RAGMultiModalModel
 # Optionally, you can specify an `index_root`, which is where it'll look for the index. It defaults to ".byaldi/".
 RAG = RAGMultiModalModel.from_index("your_index_name")
-```
-
-### Automatic PDF Rotation Correction
-
-This fork includes automatic PDF rotation detection and correction functionality. When processing PDF documents, the system can automatically detect and correct rotated pages using two strategies:
-
-1. **PDF-level rotation detection** using PyMuPDF (fast and accurate for standard PDF rotations)
-2. **Image-level rotation detection** using Tesseract OCR (handles complex rotations in scanned content)
-
-The rotation correction is enabled by default but can be configured:
-
-```python3
-# Disable rotation correction entirely
-RAG = RAGMultiModalModel.from_pretrained("vidore/colqwen2-v1.0", auto_rotate=False)
-
-# Fine-tune rotation detection
-RAG = RAGMultiModalModel.from_pretrained(
-    "vidore/colqwen2-v1.0",
-    auto_rotate=True,
-    rotation_confidence_threshold=3.0,  # Higher confidence requirement
-    use_pdf_rotation=True,              # Use PDF-level detection
-    use_tesseract_fallback=False        # Skip Tesseract fallback
-)
 ```
 
 ### Creating an index
@@ -144,6 +115,42 @@ And that's it! The model will start spinning and create your index, exporting al
 
 The main decision you'll have to make here is whether you want to set `store_collection_with_index` to True or not. If set to true, it greatly simplifies your workflow: the base64-encoded version of relevant documents will be returned as part of the query results, so you can immediately pipe it to your LLM. However, it adds considerable memory and storage requirements to your index, so you might want to set it to False (the default setting) if you're short on those resources, and create the base64 encoded versions yourself whenever needed.
 
+#### Automatic PDF Rotation Correction
+
+This fork includes automatic PDF rotation detection and correction functionality that is applied during document indexing. When processing PDF documents, the system can automatically detect and correct rotated pages using two strategies:
+
+1. **PDF-level rotation detection** using PyMuPDF (fast and accurate for standard PDF rotations)
+2. **Image-level rotation detection** using Tesseract OCR (handles complex rotations in scanned content)
+
+The rotation correction is enabled by default and configured when loading the model:
+
+```python3
+# Load model with default rotation correction settings (enabled)
+RAG = RAGMultiModalModel.from_pretrained("vidore/colqwen2-v1.0")
+RAG.index(
+    input_path="docs/",
+    index_name="my_index",
+    store_collection_with_index=False,
+    overwrite=True
+)
+
+# Load model with rotation correction disabled
+RAG = RAGMultiModalModel.from_pretrained(
+    "vidore/colqwen2-v1.0",
+    auto_rotate=False  # Disable automatic rotation correction
+)
+RAG.index(input_path="docs/", index_name="my_index", overwrite=True)
+
+# Load model with fine-tuned rotation detection settings
+RAG = RAGMultiModalModel.from_pretrained(
+    "vidore/colqwen2-v1.0",
+    auto_rotate=True,
+    rotation_confidence_threshold=3.0,  # Higher confidence requirement for Tesseract
+    use_pdf_rotation=True,              # Use PDF-level detection first
+    use_tesseract_fallback=False        # Skip Tesseract fallback for faster processing
+)
+RAG.index(input_path="docs/", index_name="my_index", overwrite=True)
+```
 
 ### Searching
 

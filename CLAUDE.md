@@ -161,3 +161,4 @@ When extending the library:
 5. Add comprehensive tests for new functionality
 6. Update documentation and examples accordingly
 7. **Test within virtual environment**: Ensure all testing is done with activated venv
+8. **Never add manual dates**: Git handles all version control and timestamps - do not add "Last updated" dates or version numbers manually

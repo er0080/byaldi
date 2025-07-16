@@ -33,6 +33,8 @@ dependencies = [
     "mteb==1.6.35",
     "ninja",
     "pdf2image",
+    "PyMuPDF",
+    "pytesseract",
     "srsly",
     "torch",
     "transformers>=4.42.0",

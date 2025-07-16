@@ -12,6 +12,7 @@ from pdf2image import convert_from_path
 from PIL import Image
 
 from byaldi.objects import Result
+from byaldi.rotation_utils import process_pdf_with_rotation_correction
 
 # Import version directly from the package metadata
 VERSION = version("Byaldi")
@@ -27,6 +28,10 @@ class ColPaliModel:
         load_from_index: bool = False,
         index_root: str = ".byaldi",
         device: Optional[Union[str, torch.device]] = None,
+        auto_rotate: bool = True,
+        rotation_confidence_threshold: float = 2.0,
+        use_pdf_rotation: bool = True,
+        use_tesseract_fallback: bool = True,
         **kwargs,
     ):
         if isinstance(pretrained_model_name_or_path, Path):
@@ -57,6 +62,10 @@ class ColPaliModel:
         self.verbose = verbose
         self.load_from_index = load_from_index
         self.index_root = index_root
+        self.auto_rotate = auto_rotate
+        self.rotation_confidence_threshold = rotation_confidence_threshold
+        self.use_pdf_rotation = use_pdf_rotation
+        self.use_tesseract_fallback = use_tesseract_fallback
         self.kwargs = kwargs
         self.collection = {}
         self.indexed_embeddings = []
@@ -204,6 +213,10 @@ class ColPaliModel:
         verbose: int = 1,
         device: Optional[Union[str, torch.device]] = None,
         index_root: str = ".byaldi",
+        auto_rotate: bool = True,
+        rotation_confidence_threshold: float = 2.0,
+        use_pdf_rotation: bool = True,
+        use_tesseract_fallback: bool = True,
         **kwargs,
     ):
         return cls(
@@ -213,6 +226,10 @@ class ColPaliModel:
             load_from_index=False,
             index_root=index_root,
             device=device,
+            auto_rotate=auto_rotate,
+            rotation_confidence_threshold=rotation_confidence_threshold,
+            use_pdf_rotation=use_pdf_rotation,
+            use_tesseract_fallback=use_tesseract_fallback,
             **kwargs,
         )
 
@@ -224,6 +241,10 @@ class ColPaliModel:
         verbose: int = 1,
         device: Optional[Union[str, torch.device]] = None,
         index_root: str = ".byaldi",
+        auto_rotate: bool = True,
+        rotation_confidence_threshold: float = 2.0,
+        use_pdf_rotation: bool = True,
+        use_tesseract_fallback: bool = True,
         **kwargs,
     ):
         index_path = Path(index_root) / Path(index_path)
@@ -237,6 +258,10 @@ class ColPaliModel:
             load_from_index=True,
             index_root=str(index_path.parent),
             device=device,
+            auto_rotate=auto_rotate,
+            rotation_confidence_threshold=rotation_confidence_threshold,
+            use_pdf_rotation=use_pdf_rotation,
+            use_tesseract_fallback=use_tesseract_fallback,
             **kwargs,
         )
 
@@ -484,22 +509,32 @@ class ColPaliModel:
         """TODO: THERE ARE TOO MANY FUNCTIONS DOING THINGS HERE. I blame Claude, but this is temporary anyway."""
         if isinstance(item, Path):
             if item.suffix.lower() == ".pdf":
-                with tempfile.TemporaryDirectory() as path:
-                    images = convert_from_path(
-                        item,
-                        thread_count=os.cpu_count() - 1,
-                        output_folder=path,
-                        paths_only=True,
+                # Use rotation correction for PDF processing
+                if self.auto_rotate:
+                    images = process_pdf_with_rotation_correction(
+                        str(item),
+                        auto_rotate=self.auto_rotate,
+                        confidence_threshold=self.rotation_confidence_threshold,
+                        use_pdf_rotation=self.use_pdf_rotation,
+                        use_tesseract_fallback=self.use_tesseract_fallback
                     )
-                    for i, image_path in enumerate(images):
-                        image = Image.open(image_path)
-                        self._add_to_index(
-                            image,
-                            store_collection_with_index,
-                            doc_id,
-                            page_id=i + 1,
-                            metadata=metadata,
+                else:
+                    # Fallback to original method if rotation correction is disabled
+                    with tempfile.TemporaryDirectory() as path:
+                        images = convert_from_path(
+                            item,
+                            thread_count=os.cpu_count() - 1,
+                            output_folder=path,
                         )
+                
+                for i, image in enumerate(images):
+                    self._add_to_index(
+                        image,
+                        store_collection_with_index,
+                        doc_id,
+                        page_id=i + 1,
+                        metadata=metadata,
+                    )
             elif item.suffix.lower() in [".jpg", ".jpeg", ".png", ".bmp"]:
                 image = Image.open(item)
                 self._add_to_index(
@@ -696,12 +731,22 @@ class ColPaliModel:
                         ):
                             images.append(Image.open(os.path.join(item, file)))
                 elif item.lower().endswith(".pdf"):
-                    # Process PDF
-                    with tempfile.TemporaryDirectory() as path:
-                        pdf_images = convert_from_path(
-                            item, thread_count=os.cpu_count() - 1, output_folder=path
+                    # Process PDF with rotation correction
+                    if self.auto_rotate:
+                        pdf_images = process_pdf_with_rotation_correction(
+                            item,
+                            auto_rotate=self.auto_rotate,
+                            confidence_threshold=self.rotation_confidence_threshold,
+                            use_pdf_rotation=self.use_pdf_rotation,
+                            use_tesseract_fallback=self.use_tesseract_fallback
                         )
-                        images.extend(pdf_images)
+                    else:
+                        # Fallback to original method if rotation correction is disabled
+                        with tempfile.TemporaryDirectory() as path:
+                            pdf_images = convert_from_path(
+                                item, thread_count=os.cpu_count() - 1, output_folder=path
+                            )
+                    images.extend(pdf_images)
                 elif item.lower().endswith(
                     (".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif")
                 ):

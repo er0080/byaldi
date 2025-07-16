@@ -45,12 +45,20 @@ class RAGMultiModalModel:
         index_root: str = ".byaldi",
         device: str = "cuda",
         verbose: int = 1,
+        auto_rotate: bool = True,
+        rotation_confidence_threshold: float = 2.0,
+        use_pdf_rotation: bool = True,
+        use_tesseract_fallback: bool = True,
     ):
         """Load a ColPali model from a pre-trained checkpoint.
 
         Parameters:
             pretrained_model_name_or_path (str): Local path or huggingface model name.
             device (str): The device to load the model on. Default is "cuda".
+            auto_rotate (bool): Whether to enable automatic rotation correction for PDFs. Default is True.
+            rotation_confidence_threshold (float): Minimum confidence threshold for Tesseract rotation detection. Default is 2.0.
+            use_pdf_rotation (bool): Whether to use PDF-level rotation detection. Default is True.
+            use_tesseract_fallback (bool): Whether to use Tesseract as fallback for rotation detection. Default is True.
 
         Returns:
             cls (RAGMultiModalModel): The current instance of RAGMultiModalModel, with the model initialised.
@@ -61,6 +69,10 @@ class RAGMultiModalModel:
             index_root=index_root,
             device=device,
             verbose=verbose,
+            auto_rotate=auto_rotate,
+            rotation_confidence_threshold=rotation_confidence_threshold,
+            use_pdf_rotation=use_pdf_rotation,
+            use_tesseract_fallback=use_tesseract_fallback,
         )
         return instance
 
@@ -71,12 +83,20 @@ class RAGMultiModalModel:
         index_root: str = ".byaldi",
         device: str = "cuda",
         verbose: int = 1,
+        auto_rotate: bool = True,
+        rotation_confidence_threshold: float = 2.0,
+        use_pdf_rotation: bool = True,
+        use_tesseract_fallback: bool = True,
     ):
         """Load an Index and the associated ColPali model from an existing document index.
 
         Parameters:
             index_path (Union[str, Path]): Path to the index.
             device (str): The device to load the model on. Default is "cuda".
+            auto_rotate (bool): Whether to enable automatic rotation correction for PDFs. Default is True.
+            rotation_confidence_threshold (float): Minimum confidence threshold for Tesseract rotation detection. Default is 2.0.
+            use_pdf_rotation (bool): Whether to use PDF-level rotation detection. Default is True.
+            use_tesseract_fallback (bool): Whether to use Tesseract as fallback for rotation detection. Default is True.
 
         Returns:
             cls (RAGMultiModalModel): The current instance of RAGMultiModalModel, with the model and index initialised.
@@ -84,7 +104,14 @@ class RAGMultiModalModel:
         instance = cls()
         index_path = Path(index_path)
         instance.model = ColPaliModel.from_index(
-            index_path, index_root=index_root, device=device, verbose=verbose
+            index_path,
+            index_root=index_root,
+            device=device,
+            verbose=verbose,
+            auto_rotate=auto_rotate,
+            rotation_confidence_threshold=rotation_confidence_threshold,
+            use_pdf_rotation=use_pdf_rotation,
+            use_tesseract_fallback=use_tesseract_fallback,
         )
 
         return instance

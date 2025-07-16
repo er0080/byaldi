@@ -8,8 +8,25 @@ Byaldi is a Python library that provides a simple wrapper around the ColPali mul
 
 ## Development Commands
 
+### Virtual Environment Setup
+
+**IMPORTANT**: Always activate the virtual environment before development:
+
+```bash
+# Activate virtual environment (required for all development work)
+source byaldi-env/bin/activate
+
+# If virtual environment doesn't exist, create it first:
+python3 -m venv byaldi-env
+source byaldi-env/bin/activate
+pip install -e .
+```
+
 ### Testing
 ```bash
+# IMPORTANT: Activate virtual environment first
+source byaldi-env/bin/activate
+
 # Run all tests
 python tests/all.py
 
@@ -17,6 +34,7 @@ python tests/all.py
 python -m pytest tests/test_colpali.py
 python -m pytest tests/test_colqwen.py  
 python -m pytest tests/test_e2e_rag.py
+python -m pytest tests/test_rotation.py
 
 # Run tests with pytest (if available)
 pytest tests/
@@ -24,6 +42,9 @@ pytest tests/
 
 ### Code Quality
 ```bash
+# IMPORTANT: Activate virtual environment first
+source byaldi-env/bin/activate
+
 # Format and lint code
 ruff format .
 ruff check .
@@ -34,10 +55,13 @@ ruff check --select F401,E722,ARG,B,I .
 
 ### Building
 ```bash
+# IMPORTANT: Activate virtual environment first
+source byaldi-env/bin/activate
+
 # Build package
 python -m build
 
-# Install in development mode
+# Install in development mode (should already be done in venv setup)
 pip install -e .
 
 # Install with optional dependencies
@@ -88,6 +112,19 @@ Model detection is done via string matching in the model name.
 
 ## Development Notes
 
+### Virtual Environment
+
+**CRITICAL**: All development work must be done within the `byaldi-env` virtual environment to ensure:
+- Consistent Python dependencies
+- Isolation from system Python packages
+- Reproducible development environment
+- Proper testing conditions
+
+Before any development work, always run:
+```bash
+source byaldi-env/bin/activate
+```
+
 ### Dependencies
 
 Core dependencies include:
@@ -96,6 +133,8 @@ Core dependencies include:
 - `pdf2image` for PDF processing
 - `PIL` for image handling
 - `srsly` for serialization
+- `PyMuPDF` for PDF rotation detection
+- `pytesseract` for OCR-based rotation detection
 
 ### Testing Strategy
 
@@ -103,6 +142,7 @@ Tests are located in `tests/` directory:
 - `test_colpali.py` - Tests for ColPali model functionality
 - `test_colqwen.py` - Tests for ColQwen2 model functionality  
 - `test_e2e_rag.py` - End-to-end retrieval tests
+- `test_rotation.py` - Tests for PDF rotation detection and correction
 - `all.py` - Comprehensive test suite
 
 ### Hardware Requirements
@@ -114,8 +154,10 @@ Tests are located in `tests/` directory:
 ### Common Development Patterns
 
 When extending the library:
-1. Add new model support in `ColPaliModel.__init__()`
-2. Implement model-specific loading logic following existing patterns
-3. Ensure backward compatibility with existing index format
-4. Add comprehensive tests for new functionality
-5. Update documentation and examples accordingly
+1. **Always activate virtual environment first**: `source byaldi-env/bin/activate`
+2. Add new model support in `ColPaliModel.__init__()`
+3. Implement model-specific loading logic following existing patterns
+4. Ensure backward compatibility with existing index format
+5. Add comprehensive tests for new functionality
+6. Update documentation and examples accordingly
+7. **Test within virtual environment**: Ensure all testing is done with activated venv

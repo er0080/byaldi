@@ -19,6 +19,25 @@ Eventually, we'll add an HNSW indexing mechanism, pooling, and, who knows, maybe
 
 It will get updated as the multi-modal ecosystem develops further!
 
+### Development Environment Setup
+
+For development work, it's recommended to use a virtual environment:
+
+```bash
+# Create virtual environment
+python3 -m venv byaldi-env
+
+# Activate virtual environment
+source byaldi-env/bin/activate  # On Linux/Mac
+# or
+byaldi-env\Scripts\activate     # On Windows
+
+# Install in development mode
+pip install -e .
+```
+
+**Important**: Always activate the `byaldi-env` virtual environment before developing or testing to ensure consistent dependencies and avoid conflicts with your system Python packages.
+
 ### Pre-requisites
 
 #### Poppler

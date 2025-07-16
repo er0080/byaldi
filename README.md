@@ -3,7 +3,7 @@ _Did you know? In the movie RAGatouille, the dish Remy makes is not actually a r
 
 <p align="center"><img width=350 alt="The Byaldi logo, it's a cheerful rat using a magnifying glass to look at a complex document. It says 'byaldi' in the middle of a circle around the rat." src="byaldi.webp"/></p>
 
-⚠️ This is the pre-release version of Byaldi. Please report any issue you encounter, there will likely be quite a few quirks to iron out!
+🔧 This is a fork which refines and adds new functionality to Byaldi. See [TODO.md](TODO.md) for current and planned development activities.
 
 Byaldi is [RAGatouille](https://github.com/answerdotai/ragatouille)'s mini sister project. It is a simple wrapper around the [ColPali](https://github.com/illuin-tech/colpali) repository to make it easy to use late-interaction multi-modal models such as ColPALI with a familiar API.
 
@@ -18,6 +18,8 @@ Additional backends will be supported in future updates. As byaldi exists to fac
 Eventually, we'll add an HNSW indexing mechanism, pooling, and, who knows, maybe 2-bit quantization?
 
 It will get updated as the multi-modal ecosystem develops further!
+
+For current development priorities and planned features, see [TODO.md](TODO.md).
 
 ### Development Environment Setup
 
@@ -81,7 +83,13 @@ Loading a model with `byaldi` is extremely straightforward:
 ```python3
 from byaldi import RAGMultiModalModel
 # Optionally, you can specify an `index_root`, which is where it'll save the index. It defaults to ".byaldi/".
-RAG = RAGMultiModalModel.from_pretrained("vidore/colqwen2-v1.0")
+RAG = RAGMultiModalModel.from_pretrained(
+    "vidore/colqwen2-v1.0",
+    auto_rotate=True,  # Enable automatic PDF rotation correction (default: True)
+    rotation_confidence_threshold=2.0,  # Tesseract confidence threshold (default: 2.0)
+    use_pdf_rotation=True,  # Use PDF-level rotation detection (default: True)
+    use_tesseract_fallback=True  # Use Tesseract as fallback (default: True)
+)
 ```
 
 If you've already got an index, and wish to load it along with the model necessary to query it, you can do so just as easily:
@@ -90,6 +98,29 @@ If you've already got an index, and wish to load it along with the model necessa
 from byaldi import RAGMultiModalModel
 # Optionally, you can specify an `index_root`, which is where it'll look for the index. It defaults to ".byaldi/".
 RAG = RAGMultiModalModel.from_index("your_index_name")
+```
+
+### Automatic PDF Rotation Correction
+
+This fork includes automatic PDF rotation detection and correction functionality. When processing PDF documents, the system can automatically detect and correct rotated pages using two strategies:
+
+1. **PDF-level rotation detection** using PyMuPDF (fast and accurate for standard PDF rotations)
+2. **Image-level rotation detection** using Tesseract OCR (handles complex rotations in scanned content)
+
+The rotation correction is enabled by default but can be configured:
+
+```python3
+# Disable rotation correction entirely
+RAG = RAGMultiModalModel.from_pretrained("vidore/colqwen2-v1.0", auto_rotate=False)
+
+# Fine-tune rotation detection
+RAG = RAGMultiModalModel.from_pretrained(
+    "vidore/colqwen2-v1.0",
+    auto_rotate=True,
+    rotation_confidence_threshold=3.0,  # Higher confidence requirement
+    use_pdf_rotation=True,              # Use PDF-level detection
+    use_tesseract_fallback=False        # Skip Tesseract fallback
+)
 ```
 
 ### Creating an index
